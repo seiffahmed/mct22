@@ -29,7 +29,6 @@ I'll explain each step in details below.
 
 
 #### Environement:
--  Ubuntu 16.04
 -  Anaconda 5.0.1
 -  Python 3.6.2
 -  OpenCV 3.1.0
