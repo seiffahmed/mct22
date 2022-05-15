@@ -67,26 +67,7 @@ The effect of `undistort` is particularly noticeable, by the change in shape of 
 A common task in autonomous driving is to convert the vehicle’s camera view of the scene into a top-down “bird’s-eye” view. We'll use OpenCV's `cv2.getPerspectiveTransform()` and `cv2.getPerspectiveTransform()` to do this task.
 (Starting from line #174 in `model.py`)
 
-<figure>
- <img src="./README_imgs/03.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/04.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/05.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 
 ---
@@ -99,96 +80,27 @@ Now, we will use color transform and Sobel differentiation to detect the lane li
 
 #### RGB color space:
 
-<figure>
- <img src="./README_imgs/06.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/07.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+>
 
 #### HSV color space:
 This type of color model closely emulates models of human color perception. While in other color models, such as RGB, an image is treated as an additive result of three base colors, the three channels of HSV represent hue (H gives a measure of the spectral composition of a color), saturation (S gives the proportion of pure light of the dominant wavelength, which indicates how far a color is from a gray of equal brightness), and value (V gives the brightness relative to
 the brightness of a similarly illuminated white color) corresponding to the intuitive appeal of tint, shade, and tone.
 
-<figure>
- <img src="./README_imgs/08.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/09.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+>
 
 #### LAB color space:
 The Lab color space describes mathematically all perceivable colors in the three dimensions L for lightness and a and b for the color opponents green–red and blue–yellow.
 
-<figure>
- <img src="./README_imgs/10.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/11.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 #### HLS color space:
 This model was developed to specify the values of hue, lightness, and saturation of a color in each channel. The difference with respect to the HSV color model is that the lightness of a pure color defined by HLS is equal to the lightness of a medium gray, while the brightness of a pure color defined by HSV is equal to the brightness of white.
 
-<figure>
- <img src="./README_imgs/12.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/13.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 ### Color Space Thresholding
 
 As you may observe, the white lane lines are clearly highlighted in the L-channel of the of the HLS color space, and the yellow line are clear in the L-channel of the LAP color space as well. We'll apply HLS L-threshold and LAB B-threshold to the image to highlight the lane lines.
-
-<figure>
- <img src="./README_imgs/14.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/15.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/16.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 ### Sobel Differentiation
 
@@ -196,142 +108,25 @@ Now, we'll explore different Sobel differentiation techniques, and try to come u
 
 #### Absolute Sobel:
 
-<figure>
- <img src="./README_imgs/17.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/18.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 
 #### Magnitude Sobel:
 
-<figure>
- <img src="./README_imgs/19.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/20.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+>
 
 #### Direction Sobel:
 
-<figure>
- <img src="./README_imgs/21.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/22.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 #### Absolute+Magnitude Sobel:
 
-<figure>
- <img src="./README_imgs/23.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/24.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/25.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 ### Comparison between Color Thresholding and Sobel Diffrentiation
 
 We'll apply both color thresholding and Sobel diffrentiation to all the test images to explore which of these two techniques will be better to do the task.
 
-<figure>
- <img src="./README_imgs/25.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/26.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/27.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/28.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/29.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/30.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/31.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/32.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/33.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
 As you can see, although Sobel diffrentiation was able to capture the lane lines correctly, it captured some noise around it. On the other hand, color thresholding was able to produce clean output highlighting the lane lines.
 
