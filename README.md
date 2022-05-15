@@ -1,3 +1,12 @@
+# seif ahmed sayed fathy 1600671
+# mohamed anwar abdallah morsi 1701160
+# magdi mohamed mahmoud 1701124
+# omar magdy ezz el deen 1700895
+# omar mohamed ahmed shawky 1700897
+# mohamed ahmed abdelaziz ahmed 1701133
+
+
+
 # Advanced Lane Finding Using OpenCV
 **In this project, I used OpenCV to write a software pipeline to identify the lane boundaries in a video from a front-facing camera on a car.**
 
@@ -16,11 +25,6 @@
 I'll explain each step in details below.
 
 
-#### Environement:
--  Ubuntu 16.04
--  Anaconda 5.0.1
--  Python 3.6.2
--  OpenCV 3.1.0
 
 
 ---
@@ -403,219 +407,6 @@ Now, we'll define the complete image processing function to read the raw image a
 After applying calibration, thresholding, and a perspective transform to a road image, we should have a binary image where the lane lines stand out clearly. However, we still need to decide explicitly which pixels are part of the lines and which belong to the left line and which belong to the right line.
 (Starting from line #651 in `model.py`)
 
-### Sliding Window Search
-
-We'll compute a histogram of the bottom half of the image and find the base of the left and right lane lines. Originally these locations were identified from the local maxima of the left and right halves of the histogram, but in the final implementation we used quarters of the histogram just left and right of the midpoint. This helped to reject lines from adjacent lanes. The function identifies 50 windows from which to identify lane pixels, each one centered on the midpoint of the pixels from the window below. This effectively "follows" the lane lines up to the top of the binary image, and speeds processing by only searching for activated pixels over a small portion of the image.
-
-<figure>
- <img src="./README_imgs/42.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/43.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/44.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/45.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/46.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/47.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/48.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/49.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-### Polyfit Using Fit from Previous Frame
-
-The Polyfit Using Fit from Previous Frame is another way that performs basically the same task, but alleviates much difficulty of the search process by leveraging a previous fit (from a previous video frame, for example) and only searching for lane pixels within a certain range of that fit. 
-
-<figure>
- <img src="./README_imgs/50.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/51.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/52.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/53.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/54.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/55.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/56.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/57.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-
----
-## Step 7: Determine the Curvature of the Lane and Vehicle Position
-
-(Starting from line #972 in `model.py`)
-
-I've depended on this [tutorial](https://www.intmath.com/applications-differentiation/8-radius-curvature.php) to calculate the lane curvature. The curvature was calculated ussing this line of code:
-
-`curve_radius = ((1 + (2*fit[0]*y_0*y_meters_per_pixel + fit[1])**2)**1.5) / np.absolute(2*fit[0])`
-
-In this example, fit[0] is the first coefficient (the y-squared coefficient) of the second order polynomial fit, and fit[1] is the second coefficient. y_0 is the y position within the image upon which the curvature calculation is based. y_meters_per_pixel is the factor used for converting from pixels to meters. This conversion was also used to generate a new fit with coefficients in terms of meters.
-
-The position of the vehicle with respect to the center of the lane is calculated with the following lines of code:
-
-`lane_center_position = (r_fit_x_int + l_fit_x_int) /2
-center_dist = (car_position - lane_center_position) * x_meters_per_pix`
-
-r_fit_x_int and l_fit_x_int are the x-intercepts of the right and left fits, respectively. This requires evaluating the fit at the maximum y value because the minimum y value is actually at the top. The car position is the difference between these intercept points and the image midpoint (assuming that the camera is mounted at the center of the vehicle).
-
----
-## Step 8: Visual display of the Lane Boundaries and Numerical Estimation of Lane Curvature and Vehicle Position
-
-
-<figure>
- <img src="./README_imgs/58.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/59.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/60.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/61.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/62.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/63.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/64.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/65.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
----
-## Step 9: Process Project Videos
-
-**Processing the project video (Sample output):**
-
-![](./README_imgs/project_video_output.gif)
-
-**Processing the challenge video (Sample output):**
-
-![](./README_imgs/challenge_project_video_output.gif)
-
-**Processing the harder challenge video (Sample output):**
-
-![](./README_imgs/harder_challenge_project_video_output.gif)
 
 
 ---
