@@ -1,641 +1,103 @@
-# Advanced Lane Finding Using OpenCV
+**Vehicle Detection Project**
 
+The goals / steps of this project are the following:
 
-# seif ahmed sayed 1600671
-# mohamed anwar abdallah morsi 1701160
-# mohamed abdelaziz hal 1701133
-# magdi mohamed mahmoud 1701124
-# omar  mohamed ahmed shawky 1700897
-# omar magdi ezzeldin 1700895
+* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
+* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
+* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
+* Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
+* Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
+* Estimate a bounding box for vehicles detected.
 
+[//]: # (Image References)
+[image1]: ./output_images/example_data.png
+[image2]: ./output_images/hog_example.png
+[image3]: ./output_images/diff_windows.png
+[image4]: ./output_images/all_possible_windows.png
+[image5]: ./output_images/detect_and_heat_examples.png
+[image6]: ./output_images/label_bound_example.png
+[image7]: ./output_images/multi_window_detect.png
+[video1]: ./project_video_output.mp4
 
-
-
-**In this project, I used OpenCV to write a software pipeline to identify the lane boundaries in a video from a front-facing camera on a car.**
-
-
-## Pipeline architecture:
-- **Compute Camera Calibration.**
-- **Apply Distortion Correction**.
-- **Apply a Perspective Transform.**
-- **Create a Thresholded Binary Image.**
-- **Define the Image Processing Pipeline.**
-- **Detect Lane Lines.**
-- **Determine the Curvature of the Lane and Vehicle Position.**
-- **Visual display of the Lane Boundaries and Numerical Estimation of Lane Curvature and Vehicle Position.**
-- **Process Project Videos.**
-
-I'll explain each step in details below.
-
-
-#### Environement:
--  Anaconda 5.0.1
--  Python 3.6.2
--  OpenCV 3.1.0
-
+## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
+### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
 ---
-## Step 1: Compute Camera Calibration
+### Writeup / README
 
-The OpenCV functions `cv2.findChessboardCorners()` and `cv2.drawChessboardCorners()` are used for image calibration. We have 20 images of a chessboard, located in `./camera_cal`, taken from different angles with the same camera, and we'll use them as input for camera calibration routine.
+#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
 
-`cv2.findChessboardCorners()` attempts to determine whether the input image is a view of the chessboard pattern and locate the internal chessboard corners, and then `cv2.drawChessboardCorners()` draws individual chessboard corners detected.
+You're reading it!
 
-Arrays of object points, corresponding to the location of internal corners of a chessboard, and image points, the pixel locations of the internal chessboard corners determined by `cv2.findChessboardCorners()`, are fed to `cv2.drawChessboardCorners()` which returns camera calibration and distortion coefficients.
+### Histogram of Oriented Gradients (HOG)
 
+#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-These will then be used by the OpenCV `cv2.calibrateCamera()` to find the camera intrinsic and extrinsic parameters from several views of a calibration pattern. These parameters will be fed to `cv2.undistort` function to correct for distortion on any image produced by the same camera.
+The code for this step is in P5.ipynb under the title 'Display HOG'
 
----
-## Step 2: Apply Distortion Correction
+I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of some of the `vehicle` and `non-vehicle` classes:
 
-OpenCV provides `cv2.undistort` function, which transforms an image to compensate for radial and tangential lens distortion.
+![example images][image1]
 
-<figure>
- <img src="./README_imgs/01.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-<figure>
- <img src="./README_imgs/02.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+Here is an example using the `YCrCb` color space and HOG parameters of `orientations=15`, `pixels_per_cell=(16, 16)` and `cells_per_block=(2, 2)`:
 
-The effect of `undistort` is particularly noticeable, by the change in shape of the car hood at the bottom corners of the image.
 
+![HOG Example][image2]
 
----
-## Step 3: Apply a Perspective Transform
+#### 2. Explain how you settled on your final choice of HOG parameters.
 
-A common task in autonomous driving is to convert the vehicle’s camera view of the scene into a top-down “bird’s-eye” view. We'll use OpenCV's `cv2.getPerspectiveTransform()` and `cv2.getPerspectiveTransform()` to do this task.
-(Starting from line #174 in `model.py`)
+I tried various combinations of parameters and I chose the YUV colorspace due to success in previous projects and it's preference for how humans see color. I later changed this to YCrCb since this seems better when working in the digital rather than analog realm. I had success in the classes using orientations: 15, pix_per_block: 8 and cell_per_block: 2. I later changed pix_per_block to 16 since it didn't seem to effect accuracy and the HOG calculations were much faster. If I had more time I would like to have implemented grid search to try out all the different possible combinations of parameters in case there is a better one. At 99% accuracy I'm happy to continue with what I've got.
 
-<figure>
- <img src="./README_imgs/03.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-<figure>
- <img src="./README_imgs/04.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/05.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-
----
-## Step 4: Create a Thresholded Binary Image
-
-Now, we will use color transform and Sobel differentiation to detect the lane lines in the image.
-(Starting from line #247 in `model.py`)
-
-### Exploring different color spaces
-
-#### RGB color space:
-
-<figure>
- <img src="./README_imgs/06.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/07.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-#### HSV color space:
-This type of color model closely emulates models of human color perception. While in other color models, such as RGB, an image is treated as an additive result of three base colors, the three channels of HSV represent hue (H gives a measure of the spectral composition of a color), saturation (S gives the proportion of pure light of the dominant wavelength, which indicates how far a color is from a gray of equal brightness), and value (V gives the brightness relative to
-the brightness of a similarly illuminated white color) corresponding to the intuitive appeal of tint, shade, and tone.
-
-<figure>
- <img src="./README_imgs/08.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/09.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-#### LAB color space:
-The Lab color space describes mathematically all perceivable colors in the three dimensions L for lightness and a and b for the color opponents green–red and blue–yellow.
-
-<figure>
- <img src="./README_imgs/10.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/11.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-#### HLS color space:
-This model was developed to specify the values of hue, lightness, and saturation of a color in each channel. The difference with respect to the HSV color model is that the lightness of a pure color defined by HLS is equal to the lightness of a medium gray, while the brightness of a pure color defined by HSV is equal to the brightness of white.
-
-<figure>
- <img src="./README_imgs/12.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/13.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-### Color Space Thresholding
-
-As you may observe, the white lane lines are clearly highlighted in the L-channel of the of the HLS color space, and the yellow line are clear in the L-channel of the LAP color space as well. We'll apply HLS L-threshold and LAB B-threshold to the image to highlight the lane lines.
-
-<figure>
- <img src="./README_imgs/14.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/15.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/16.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-### Sobel Differentiation
-
-Now, we'll explore different Sobel differentiation techniques, and try to come up with a combination that produces a better output than color space thresholding.
-
-#### Absolute Sobel:
-
-<figure>
- <img src="./README_imgs/17.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/18.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-
-#### Magnitude Sobel:
-
-<figure>
- <img src="./README_imgs/19.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/20.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-#### Direction Sobel:
-
-<figure>
- <img src="./README_imgs/21.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/22.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-#### Absolute+Magnitude Sobel:
-
-<figure>
- <img src="./README_imgs/23.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/24.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/25.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-### Comparison between Color Thresholding and Sobel Diffrentiation
-
-We'll apply both color thresholding and Sobel diffrentiation to all the test images to explore which of these two techniques will be better to do the task.
-
-<figure>
- <img src="./README_imgs/25.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/26.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/27.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/28.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/29.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/30.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/31.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/32.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/33.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-As you can see, although Sobel diffrentiation was able to capture the lane lines correctly, it captured some noise around it. On the other hand, color thresholding was able to produce clean output highlighting the lane lines.
-
-
----
-## Step 5: Define the Image Processing Pipeline
-
-Now, we'll define the complete image processing function to read the raw image and apply the following steps:
-1. Distortion Correction.
-2. Perspective Transform.
-3. Color Thresholding.
-
-<figure>
- <img src="./README_imgs/34.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/35.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/36.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/37.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/38.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/39.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/40.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/41.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-
----
-## Step 6: Detect the Lane Lines
-
-After applying calibration, thresholding, and a perspective transform to a road image, we should have a binary image where the lane lines stand out clearly. However, we still need to decide explicitly which pixels are part of the lines and which belong to the left line and which belong to the right line.
-(Starting from line #651 in `model.py`)
+I trained a linear SVM in P5.ipynb under the title 'Train Classifier'. For feature extraction I combined the HOG values for each of the three image channels with the spatial and histogram features for a total feature vector length of 2580. I also used the StandardScaler during feature extraction to determine the mean and range over the entire dataset and then normalize all the data to be mean centered with a normal range. I re-use the scaler thoughout the remaining steps so that the same modifications are made to standardize new test images and video frames. I just used the linear SVM and before training I randomly split the data into 80% training and 20% validation. With these settings I achieved 99% accuracy 
 
 ### Sliding Window Search
 
-We'll compute a histogram of the bottom half of the image and find the base of the left and right lane lines. Originally these locations were identified from the local maxima of the left and right halves of the histogram, but in the final implementation we used quarters of the histogram just left and right of the midpoint. This helped to reject lines from adjacent lanes. The function identifies 50 windows from which to identify lane pixels, each one centered on the midpoint of the pixels from the window below. This effectively "follows" the lane lines up to the top of the binary image, and speeds processing by only searching for activated pixels over a small portion of the image.
+#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-<figure>
- <img src="./README_imgs/42.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+I first implemented the simple sliding window method from class under the title 'Algorithm to Determine Sliding Windows'. This worked succesfully on my test image but was unlikey to work in other scenarios due to the narrow scale and search size. I then implemented the find cars method from the lessons which just calculates the HOG features once, then sub-samples those features for each window of interest. This method takes a y-start, y-stop and scale parameter to determine where in the image the windows should be placed and how large they need to be. There is also an inherent overlap of the windows in this method. I experimented with a set of different values that only focused on the road region with smaller windows searching closer to the horizon and larger windows search closer to the front of the car. I also tweaked the algorithm a little to make sure the search windows occured right up to the edges of the left and right of the image. Below are examples of each set of search windows along with a final image of all the search windows drawn at once. I used multiple random colors to try and give a better sense of which lines belong to which search windows.
 
-<figure>
- <img src="./README_imgs/43.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+![different search windows][image3]
 
-<figure>
- <img src="./README_imgs/44.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+![all search windows][image4]
 
-<figure>
- <img src="./README_imgs/45.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+And here is an example of the search windows and classifer applied to an image:
 
-<figure>
- <img src="./README_imgs/46.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+![multi search window classification][image7]
 
-<figure>
- <img src="./README_imgs/47.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
-<figure>
- <img src="./README_imgs/48.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+Ultimately I searched on five scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images (which also show the thresholded heap map that I explain below):
 
-<figure>
- <img src="./README_imgs/49.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+![alt text][image5]
+---
 
-### Polyfit Using Fit from Previous Frame
+### Video Implementation
 
-The Polyfit Using Fit from Previous Frame is another way that performs basically the same task, but alleviates much difficulty of the search process by leveraging a previous fit (from a previous video frame, for example) and only searching for lane pixels within a certain range of that fit. 
+#### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
+Here's a [link to my video result](./project_video_output.mp4)
 
-<figure>
- <img src="./README_imgs/50.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
 
-<figure>
- <img src="./README_imgs/51.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-<figure>
- <img src="./README_imgs/52.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected. I collected 30 frames of detection windows to generate my heatmap, then I used a threshold of 0.75 * 30, which is slightly less than a threshold of 1 for each individual frame. I found this gave the best results of strong lables for vehicles and no false positives.
 
-<figure>
- <img src="./README_imgs/53.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
+You can see examples of heat maps in the previous image, here is another where the label has been applied to a heat map, then bounding boxes determined from said labels
 
-<figure>
- <img src="./README_imgs/54.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/55.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/56.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/57.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
+![labels to bounding boxes][image6]
 
 ---
-## Step 7: Determine the Curvature of the Lane and Vehicle Position
 
-(Starting from line #972 in `model.py`)
+### Discussion
 
-I've depended on this [tutorial](https://www.intmath.com/applications-differentiation/8-radius-curvature.php) to calculate the lane curvature. The curvature was calculated ussing this line of code:
+#### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-`curve_radius = ((1 + (2*fit[0]*y_0*y_meters_per_pixel + fit[1])**2)**1.5) / np.absolute(2*fit[0])`
+I'm not 100% confident that I chose the best parameters and given more time I'd like to perform a gridsearch to determine if there are better options available. I also tried to pre-process the data such that differences in brightness would be ignored by equalizing the histogram, based on review feedback from a previous project. This gave me a very marginally higher accuracy in the classifier, but when applied to images it seemed to be very bad at detecting vehicles. This is something else I'd like to return to. It would be interesting to test my approach with different weather and lighting conditions, it may fail in that scenario and require more training data.
 
-In this example, fit[0] is the first coefficient (the y-squared coefficient) of the second order polynomial fit, and fit[1] is the second coefficient. y_0 is the y position within the image upon which the curvature calculation is based. y_meters_per_pixel is the factor used for converting from pixels to meters. This conversion was also used to generate a new fit with coefficients in terms of meters.
+I also found that it took a long time to process the video on a pretty tricked out laptop, far from real-time. It would be interested to do a type of grid search where I can compare the run-time and accuracy trade of an perhaps choose a classifier and feature extraction that's far faster with no major loss in accuracy.
 
-The position of the vehicle with respect to the center of the lane is calculated with the following lines of code:
+I also only tried out the standard linear SVM. With more time I would have liked to try the radial with various parameters, perhaps again in some kind of grid search harness.
 
-`lane_center_position = (r_fit_x_int + l_fit_x_int) /2
-center_dist = (car_position - lane_center_position) * x_meters_per_pix`
-
-r_fit_x_int and l_fit_x_int are the x-intercepts of the right and left fits, respectively. This requires evaluating the fit at the maximum y value because the minimum y value is actually at the top. The car position is the difference between these intercept points and the image midpoint (assuming that the camera is mounted at the center of the vehicle).
-
----
-## Step 8: Visual display of the Lane Boundaries and Numerical Estimation of Lane Curvature and Vehicle Position
-
-
-<figure>
- <img src="./README_imgs/58.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/59.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/60.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/61.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/62.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/63.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/64.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
-<figure>
- <img src="./README_imgs/65.png" width="1072" alt="Combined Image" />
- <figcaption>
- <p></p> 
- </figcaption>
-</figure>
-
----
-## Step 9: Process Project Videos
-
-**Processing the project video (Sample output):**
-
-![](./README_imgs/project_video_output.gif)
-
-**Processing the challenge video (Sample output):**
-
-![](./README_imgs/challenge_project_video_output.gif)
-
-**Processing the harder challenge video (Sample output):**
-
-![](./README_imgs/harder_challenge_project_video_output.gif)
-
-
----
-## Conclusion
-
-The problems I encountered were almost exclusively due to lighting conditions, shadows, discoloration, etc. It wasn't difficult to detect the lane on the project video, even on the lighter-gray bridge sections that comprised the most difficult sections of the video.
-
-On the other hand, the model didn't perform well on the challenge video and the harder challenge. The lane lines don't necessarily occupy the same pixel value (speaking of the L channel of the HLS color space) range on this video that they occupy on the first video, so the normalization/scaling technique helped here quite a bit, although it also tended to create problems (large noisy areas activated in the binary image) when the white lines didn't contrast with the rest of the image enough.
-This would definitely be an issue in snow or in a situation where, for example, a bright white car were driving among dull white lane lines.
-One way to solve this issue is to apply smoothing to the video output by averaging the last n found good fits. We can also invalidate fits if the left and right base points aren't a certain distance apart (within some tolerance) under the assumption that the lane width will remain relatively constant.
-
-Other ways to improve the model include more dynamic thresholding, perhaps considering separate threshold parameters for different horizontal slices of the image, or dynamically selecting threshold parameters based on the resulting number of activated pixels, designating a confidence level for fits and rejecting new fits that deviate beyond a certain amount, or rejecting the right fit (for example) if the confidence in the left fit is high and right fit deviates too much (enforcing roughly parallel fits).
