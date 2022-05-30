@@ -1,9 +1,7 @@
 # seif ahmed sayed fathy 1600671
 # mohamed anwar abdallah morsi 1701160
 # magdi mohamed mahmoud 1701124
-# omar magdy ezz el deen 1700895
-# omar mohamed ahmed shawky 1700897
-# mohamed ahmed abdelaziz ahmed 1701133
+
 
 
 
